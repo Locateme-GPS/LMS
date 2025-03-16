@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        input, button { margin: 10px; padding: 8px; }
+        #dashboard { display: none; }
+    </style>
+</head>
+<body>
+    <div id="login-form">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email" required><br>
+        <input type="password" id="password" placeholder="Password" required><br>
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <div id="dashboard">
+        <h2>Welcome, <span id="user-email"></span></h2>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Login successful!") {
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    document.getElementById('user-email').innerText = email;
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function logout() {
+            fetch(`${API_URL}/logout`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Logged out successfully") {
+                    document.getElementById('login-form').style.display = 'block';
+                    document.getElementById('dashboard').style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

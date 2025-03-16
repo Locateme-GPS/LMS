@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            color: white;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+        }
+        .navbar a:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div><a href="#">Home</a></div>
+        <div id="nav-links">
+            <a href="index.html" id="login-link">Login</a>
+            <a href="register.html" id="register-link">Register</a>
+        </div>
+    </div>
+
+    <h1>Welcome to the Home Page</h1>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            checkLoginStatus();
+        });
+        const API_URL = "http://localhost:8000";
+
+//         function checkLoginStatus() {
+//     fetch(`${API_URL}/status`, { credentials: "include" })
+//     .then(response => response.json())
+//     .then(data => {
+//         console.log("Login status response:", data); // Logs the full object
+
+//         alert(JSON.stringify(data, null, 2)); // Properly format and show object data
+
+//         if (data.loggedIn === true || data.loggedIn === "true") {  
+//             console.log("User is logged in, calling getUsername()");
+//             getUsername();
+//         } else {
+//             console.log("User is not logged in");
+//         }
+//     })
+//     .catch(error => console.error("Error checking login status:", error));
+// }
+    // function checkLoginStatus() {
+    //     fetch(`${API_URL}/status`, { credentials: "include" })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         console.log("Login status response:", data); // Logs the full object
+    //         console.log("Type of data.loggedIn:", typeof data.loggedIn); // Debugging type
+
+    //         alert(`Response: ${JSON.stringify(data, null, 2)}\nType: ${typeof data.loggedIn}`);
+
+    //         if (data.loggedIn === "true") {  // Ensure it's treated as a string
+    //             console.log("User is logged in, calling getUsername()");
+    //             getUsername();
+    //         } else {
+    //             console.log("User is not logged in");
+    //         }
+    //     })
+    //     .catch(error => console.error("Error checking login status:", error));
+    // }
+    function checkLoginStatus() {
+    fetch(`${API_URL}/status`, { credentials: "include" })
+        .then(response => {
+            console.log("Raw Response Object:", response); // Debugging
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.json(); // Parse response as JSON
+        })
+        .then(data => {
+            console.log("Parsed JSON Response:", data); // Debugging
+            alert(JSON.stringify(data, null, 2)); // Debugging
+        })
+        .catch(error => console.error("Error checking login status:", error));
+}
+
+
+
+
+
+        function getUsername() {
+            fetch(`${API_URL}/username`, { credentials: "include" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        document.getElementById("nav-links").innerHTML = `
+                            <span>Welcome, ${data.username}</span>
+                            <a href="dashboard.html">Dashboard</a>
+                            <a href="register-details.html">Register Details</a>
+                            <a href="#" id="logout">Logout</a>
+                        `;
+
+                        document.getElementById("logout").addEventListener("click", function () {
+                            logout();
+                        });
+                    }
+                })
+                .catch(error => console.error("Error fetching username:", error));
+        }
+
+        function logout() {
+            fetch(`${API_URL}/logout`, { method: "POST", credentials: "include" })
+                .then(response => response.json())
+                .then(() => {
+                    window.location.reload();
+                })
+                .catch(error => console.error("Error logging out:", error));
+        }
+    </script>
+
+</body>
+</html>

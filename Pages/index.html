@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: blue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: darkblue;
+        }
+        .message {
+            margin-top: 10px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Register</h2>
+        <input type="text" id="regUsername" placeholder="Username">
+        <input type="email" id="regEmail" placeholder="Email">
+        <input type="password" id="regPassword" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <p class="message" id="regMessage"></p>
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <h2>Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p class="message" id="loginMessage"></p>
+    </div>
+
+    <script>
+        // const API_URL = "http://localhost:8000"; // Update this if your backend URL is different
+
+        // async function register() {
+        //     const username = document.getElementById("regUsername").value;
+        //     const email = document.getElementById("regEmail").value;
+        //     const password = document.getElementById("regPassword").value;
+        //     const regMessage = document.getElementById("regMessage");
+
+        //     if (!username || !email || !password) {
+        //         regMessage.innerText = "All fields are required.";
+        //         return;
+        //     }
+
+        //     try {
+        //         // Step 1: Request OTP
+        //         const otpResponse = await fetch(`${API_URL}/request-otp1`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ email })
+        //         });
+
+        //         const otpData = await otpResponse.json();
+
+        //         if (!otpResponse.ok) {
+        //             regMessage.innerText = otpData.error;
+        //             return;
+        //         }
+
+        //         // Step 2: Prompt for OTP
+        //         const userOTP = prompt("Enter the OTP sent to your email:");
+
+        //         if (!userOTP) {
+        //             regMessage.innerText = "OTP verification cancelled.";
+        //             return;
+        //         }
+
+        //         // Step 3: Verify OTP
+        //         const verifyResponse = await fetch(`${API_URL}/verify-otp1`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ email, otp: userOTP })
+        //         });
+
+        //         const verifyData = await verifyResponse.json();
+
+        //         if (!verifyResponse.ok) {
+        //             regMessage.innerText = verifyData.error;
+        //             return;
+        //         }
+
+        //         // Step 4: Complete Registration
+        //         const registerResponse = await fetch(`${API_URL}/register`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ username, email, password })
+        //         });
+
+        //         const registerData = await registerResponse.json();
+        //         regMessage.innerText = registerData.message || registerData.error;
+        //     } catch (error) {
+        //         regMessage.innerText = "An error occurred. Please try again.";
+        //     }
+        // }
+
+        // async function login() {
+        //     const email = document.getElementById("loginUsername").value;
+        //     const password = document.getElementById("loginPassword").value;
+        //     const loginMessage = document.getElementById("loginMessage");
+
+        //     if (!email || !password) {
+        //         loginMessage.innerText = "All fields are required.";
+        //         return;
+        //     }
+
+        //     try {
+        //         // Step 1: Authenticate the user
+        //         const loginResponse = await fetch(`${API_URL}/login`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ email, password })
+        //         });
+
+        //         const loginData = await loginResponse.json();
+
+        //         if (!loginResponse.ok) {
+        //             loginMessage.innerText = loginData.error;
+        //             return;
+        //         }
+
+        //         // Extract email from the response
+
+        //         // Step 2: Request OTP
+        //         const otpResponse = await fetch(`${API_URL}/request-otp1`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ email })  // Sending email instead of username
+        //         });
+
+        //         const otpData = await otpResponse.json();
+
+        //         if (!otpResponse.ok) {
+        //             loginMessage.innerText = otpData.error;
+        //             return;
+        //         }
+
+        //         // Step 3: Prompt for OTP
+        //         const userOTP = prompt("Enter the OTP sent to your email:");
+
+        //         if (!userOTP) {
+        //             loginMessage.innerText = "OTP verification cancelled.";
+        //             return;
+        //         }
+
+        //         // Step 4: Verify OTP
+        //         const verifyResponse = await fetch(`${API_URL}/verify-otp1`, {
+        //             method: "POST",
+        //             headers: { "Content-Type": "application/json" },
+        //             body: JSON.stringify({ email, otp: userOTP })  // Using email for verification
+        //         });
+
+        //         const verifyData = await verifyResponse.json();
+
+        //         if (!verifyResponse.ok) {
+        //             loginMessage.innerText = verifyData.error;
+        //             return;
+        //         }
+
+        //         loginMessage.innerText = "Login successful!";
+        //     } catch (error) {
+        //         loginMessage.innerText = "An error occurred. Please try again.";
+        //     }
+        // }
+    const API_URL = "http://localhost:8000"; // Update this if your backend URL is different
+
+    async function register() {
+        const username = document.getElementById("regUsername").value;
+        const email = document.getElementById("regEmail").value;
+        const password = document.getElementById("regPassword").value;
+        
+        const loginMessage = document.getElementById("loginMessage");
+        alert(username)
+        alert(email)
+        alert(password)
+        if (!email || !password) {
+            regMessage.innerText = "All fields are required.";
+            return;
+        }
+
+        try {
+            // Step 1: Check if the email already exists
+            // const checkResponse = await fetch(`${API_URL}/check-email`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ username,email,password })
+            // });
+
+            // const checkData = await checkResponse.json();
+            // if (!checkResponse.ok) {
+            //     regMessage.innerText = checkData.error;
+            //     return;
+            // }
+
+            // // Step 2: Request OTP
+            // const otpResponse = await fetch(`${API_URL}/request-otp`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ email })
+            // });
+
+            // const otpData = await otpResponse.json();
+            // if (!otpResponse.ok) {
+            //     regMessage.innerText = otpData.error;
+            //     return;
+            // }
+
+            // // Step 3: Prompt for OTP
+            // const userOTP = prompt("Enter the OTP sent to your email:");
+            // if (!userOTP) {
+            //     regMessage.innerText = "OTP verification cancelled.";
+            //     return;
+            // }
+
+            // // Step 4: Verify OTP
+            // const verifyResponse = await fetch(`${API_URL}/verify-otp`, {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     body: JSON.stringify({ email, otp: userOTP })
+            // });
+
+            // const verifyData = await verifyResponse.json();
+            // if (!verifyResponse.ok) {
+            //     regMessage.innerText = verifyData.error;
+            //     return;
+            // }
+
+            // Step 5: Complete Registration
+            const registerResponse = await fetch(`${API_URL}/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const registerData = await registerResponse.json();
+            regMessage.innerText = registerData.message || registerData.error;
+        } catch (error) {
+            regMessage.innerText = "An error occurred. Please try again.";
+        }
+    }
+
+    async function login() {
+    const email = document.getElementById("loginUsername").value;  // Corrected id
+    const password = document.getElementById("loginPassword").value;
+    alert(email)
+    alert(password)
+    const loginMessage = document.getElementById("loginMessage");
+
+    if (!email || !password) {
+        loginMessage.innerText = "All fields are required.";
+        return;
+    }
+
+    try {
+        // Step 1: Authenticate the user
+        const loginResponse = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ email, password })
+        });
+
+        const loginData = await loginResponse.json();
+
+        if (!loginResponse.ok) {
+            loginMessage.innerText = loginData.error;
+            return;
+        }
+      
+
+      
+        const otpResponse = await fetch(`${API_URL}/request-otp1`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })  // Sending email instead of username
+        });
+
+        const otpData = await otpResponse.json();
+        if (!otpResponse.ok) {
+            loginMessage.innerText = otpData.error;
+            return;
+        }
+
+        // Step 3: Prompt for OTP
+        const userOTP = prompt("Enter the OTP sent to your email:");
+        if (!userOTP) {
+            loginMessage.innerText = "OTP verification cancelled.";
+            return;
+        }
+
+        // Step 4: Verify OTP
+        const verifyResponse = await fetch(`${API_URL}/verify-otp1`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, otp: userOTP })  // Using email for verification
+        });
+
+        const verifyData = await verifyResponse.json();
+        if (!verifyResponse.ok) {
+            loginMessage.innerText = verifyData.error;
+            return;
+        }
+
+        loginMessage.innerText = "Login successful!";
+    } catch (error) {
+        loginMessage.innerText = "An error occurred. Please try again.";
+    }
+}
+// async function login() { 
+//     const email = document.getElementById("loginUsername").value;
+//     const password = document.getElementById("loginPassword").value;
+    
+//     const loginMessage = document.getElementById("loginMessage");
+
+//     if (!email || !password) {
+//         loginMessage.innerText = "All fields are required.";
+//         return;
+//     }
+
+//     try {
+//         const loginResponse = await fetch("http://localhost:8000/login", {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify({ email, password })
+//         });
+
+//         const loginData = await loginResponse.json();
+
+//         if (!loginResponse.ok) {
+//             loginMessage.innerText = loginData.error;
+//             return;
+//         }
+
+//         loginMessage.innerText = "Login successful!";
+//     } catch (error) {
+//         loginMessage.innerText = "An error occurred. Please try again.";
+//     }
+// }
+
+
+</script>
+
+    </script>
+
+</body>
+</html>

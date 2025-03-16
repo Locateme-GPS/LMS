@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+    <h2 class="text-center">User Details</h2>
+
+    <!-- Input for Email -->
+    <div class="mb-3">
+        <label for="email" class="form-label">Enter Email:</label>
+        <input type="email" id="email" class="form-control" placeholder="Enter email">
+        <button class="btn btn-primary mt-2" onclick="fetchUserDetails()">Get Details</button>
+    </div>
+
+    <!-- User Details Display -->
+    <div id="userDetails" class="mt-4"></div>
+
+    <!-- Update User Form -->
+    <h3 class="mt-4">Update User Details</h3>
+    <form id="updateForm">
+        <input type="hidden" id="updateEmail">
+        
+        <label>Full Name:</label>
+        <input type="text" id="full_name" class="form-control">
+        
+        <label>Age:</label>
+        <input type="number" id="age" class="form-control">
+        
+        <label>Address:</label>
+        <input type="text" id="address" class="form-control">
+        
+        <label>Phone:</label>
+        <input type="text" id="phone" class="form-control">
+        
+        <label>Father's Name:</label>
+        <input type="text" id="father_name" class="form-control">
+        
+        <label>Mother's Name:</label>
+        <input type="text" id="mother_name" class="form-control">
+        
+        <label>Parent Contact:</label>
+        <input type="text" id="parent_contact" class="form-control">
+        
+        <label>School Name:</label>
+        <input type="text" id="school_name" class="form-control">
+        
+        <label>Grade:</label>
+        <input type="text" id="grade" class="form-control">
+        
+        <label>Admission No:</label>
+        <input type="text" id="admission_no" class="form-control">
+        
+        <button type="button" class="btn btn-success mt-3" onclick="updateUserDetails()">Update Details</button>
+    </form>
+
+    <h3 class="mt-4">Payment Status</h3>
+    <button class="btn btn-success mt-3" onclick="verifyPayment()">Verify Payment</button>
+
+    <script>
+        const apiUrl = "http://localhost:8000";
+
+        // Fetch user details
+        async function fetchUserDetails() {
+            const email = document.getElementById("email").value;
+            if (!email) {
+                alert("Please enter an email.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}/userdetails/${encodeURIComponent(email)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById("userDetails").innerHTML = `
+                        <div class="card p-3">
+                            <h4>${data.details.full_name || "N/A"}</h4>
+                            <p><strong>Email:</strong> ${data.details.email}</p>
+                            <p><strong>Age:</strong> ${data.details.age || "N/A"}</p>
+                            <p><strong>Address:</strong> ${data.details.address || "N/A"}</p>
+                            <p><strong>Phone:</strong> ${data.details.phone || "N/A"}</p>
+                            <p><strong>Payment Status:</strong> ${data.details.payment_status}</p>
+                        </div>
+                    `;
+
+                    // Fill the update form with current user details
+                    document.getElementById("updateEmail").value = data.details.email;
+                    document.getElementById("full_name").value = data.details.full_name || "";
+                    document.getElementById("age").value = data.details.age || "";
+                    document.getElementById("address").value = data.details.address || "";
+                    document.getElementById("phone").value = data.details.phone || "";
+                    document.getElementById("father_name").value = data.details.father_name || "";
+                    document.getElementById("mother_name").value = data.details.mother_name || "";
+                    document.getElementById("parent_contact").value = data.details.parent_contact || "";
+                    document.getElementById("school_name").value = data.details.school_name || "";
+                    document.getElementById("grade").value = data.details.grade || "";
+                    document.getElementById("admission_no").value = data.details.admission_no || "";
+                } else {
+                    document.getElementById("userDetails").innerHTML = `<p class="text-danger">${data.error}</p>`;
+                }
+            } catch (error) {
+                console.error("Error fetching details:", error);
+            }
+        } 
+
+        async function updateUserDetails() {
+            const email = document.getElementById("updateEmail").value;
+            if (!email) {
+                alert("No user selected to update.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("email", email);
+            formData.append("full_name", document.getElementById("full_name").value);
+            formData.append("age", document.getElementById("age").value);
+            formData.append("address", document.getElementById("address").value);
+            formData.append("phone", document.getElementById("phone").value);
+            formData.append("father_name", document.getElementById("father_name").value);
+            formData.append("mother_name", document.getElementById("mother_name").value);
+            formData.append("parent_contact", document.getElementById("parent_contact").value);
+            formData.append("school_name", document.getElementById("school_name").value);
+            formData.append("grade", document.getElementById("grade").value);
+            formData.append("admission_no", document.getElementById("admission_no").value);
+
+            try {
+                const response = await fetch(`http://localhost:8000/updateuser/${encodeURIComponent(email)}`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const text = await response.text(); // Read response as text first
+                try {
+                    const data = JSON.parse(text); // Try to parse as JSON
+                    if (response.ok) {
+                        alert("User details updated successfully!");
+                        fetchUserDetails(); // Refresh details
+                    } else {
+                        alert(`Error: ${data.error}`);
+                    }
+                } catch (jsonError) {
+                    console.error("Invalid JSON response:", text);
+                    alert("Error updating user details. Invalid server response.");
+                }
+
+            } catch (error) {
+                console.error("Error updating user details:", error);
+            }
+        }
+
+        async function verifyPayment() {
+            const email = document.getElementById("email").value;
+            if (!email) {
+                alert("Please enter the email of the student to verify payment.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}/verifypayment/${encodeURIComponent(email)}`, {
+                    method: "POST"
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Payment status updated to Verified.");
+                    fetchUserDetails(); // Refresh details to show the updated status
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error("Error verifying payment:", error);
+            }
+        }
+    </script>
+</body>
+</html>
