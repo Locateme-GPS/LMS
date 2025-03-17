@@ -1,2 +1,2 @@
-# Summer-School
-Summer School website
+# LMS
+Summer LMS website
