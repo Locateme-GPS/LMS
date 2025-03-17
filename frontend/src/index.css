@@ -1,0 +1,105 @@
+/* Global Variables */
+:root {
+  --font-main: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --color-dark: #1a202c;
+  --color-light: #f9f9f9;
+  --color-primary: #646cff;
+  --color-primary-hover: #535bf2;
+  --color-text-dark: #ffffff;
+  --color-text-light: #213547;
+  --color-background-dark: #242424;
+  --color-background-light: #ffffff;
+
+  font-family: var(--font-main);
+  line-height: 1.6;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  color-scheme: light dark;
+  color: var(--color-text-dark);
+  background-color: var(--color-background-dark);
+}
+
+/* Reset margins/paddings */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Links */
+a {
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Body */
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-background-dark);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraph */
+p {
+  margin-bottom: 1rem;
+}
+
+/* Buttons */
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.6em 1.2em;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--color-dark);
+  color: var(--color-text-dark);
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Light Theme */
+@media (prefers-color-scheme: light) {
+  :root {
+    color: var(--color-text-light);
+    background-color: var(--color-background-light);
+  }
+
+  body {
+    background-color: var(--color-background-light);
+  }
+
+  button {
+    background-color: var(--color-light);
+    color: var(--color-text-light);
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+}
