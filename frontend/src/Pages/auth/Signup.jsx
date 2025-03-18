@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { BsEnvelope, BsLock, BsPerson } from "react-icons/bs";
-import { Link } from "react-router-dom";
-import "./Signup.css"; // IMPORTANT: Import CSS like Login!
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./Signup.css";
 
 function SignUp() {
   const [signUpData, setSignUpData] = useState({
@@ -11,29 +12,67 @@ function SignUp() {
     confirmPassword: "",
   });
 
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
   function handleUserInput(e) {
     const { name, value } = e.target;
     setSignUpData({ ...signUpData, [name]: value });
   }
 
-  function onSignUp(event) {
+  async function onSignUp(event) {
     event.preventDefault();
 
-    // Basic password match validation
     if (signUpData.password !== signUpData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    console.log("Signing up with:", signUpData);
+    try {
+      // Step 1: Request OTP
+      const otpRes = await axios.post("http://localhost:8000/request-otp1", {
+        email: signUpData.email,
+      });
 
-    // Reset form
-    setSignUpData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+      if (otpRes.data) {
+        alert("OTP sent to your email. Please check your inbox.");
+
+        // Step 2: Prompt user for OTP
+        const otp = window.prompt("Enter OTP sent to your email:");
+
+        if (otp) {
+          // Step 3: Verify OTP
+          const verifyRes = await axios.post("http://localhost:8000/verify-otp1", {
+            email: signUpData.email,
+            otp: otp,
+          });
+
+          if (verifyRes.data) {
+            // Step 4: Register the user after OTP verification
+            const registerRes = await axios.post("http://localhost:8000/register", {
+              username: signUpData.name,
+              email: signUpData.email,
+              password: signUpData.password,
+            });
+
+            if (registerRes.data.success) {
+              alert("Registration successful! Redirecting to login...");
+              navigate("/login");
+            } else {
+              alert(registerRes.data.message || "Registration failed. Please try again.");
+            }
+          } else {
+            alert("Invalid OTP! Please try again.");
+          }
+        } else {
+          alert("OTP verification canceled.");
+        }
+      } else {
+        setError("Failed to send OTP. Try again later.");
+      }
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    }
   }
 
   return (
@@ -105,14 +144,15 @@ function SignUp() {
           />
         </div>
 
+        {error && <p className="error-message">{error}</p>}
+
         <button type="submit" className="signup-btn">
           Sign Up
         </button>
       </form>
 
       <p className="footer-text">
-        Already have an account?{" "}
-        <Link to="/login">Login</Link> here
+        Already have an account? <Link to="/login">Login</Link> here
       </p>
     </div>
   );
