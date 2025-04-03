@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -23,6 +22,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jung-kurt/gofpdf"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -673,7 +673,8 @@ func CheckUserRole(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"role": user.Role})
+	// c.JSON(http.StatusOK, gin.H{"role": user.Role})
+	c.JSON(http.StatusOK, gin.H{"isAdmin": user.Role == "admin"})
 }
 
 type Course struct {
@@ -770,6 +771,67 @@ func uploadResource(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Resource uploaded successfully", "file": fileName})
 }
 
+// func uploadTextNote(c *gin.Context) {
+// 	courseName := c.Param("course")
+
+// 	// Check if course exists
+// 	var course Course
+// 	err := coursesCollection.FindOne(context.TODO(), bson.M{"name": courseName}).Decode(&course)
+// 	if err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Course not found"})
+// 		return
+// 	}
+
+// 	// Get the note content from request
+// 	var note struct {
+// 		Name    string `json:"name"`    // Note filename
+// 		Content string `json:"content"` // Multi-line text content
+// 	}
+// 	if err := c.ShouldBindJSON(&note); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+// 		return
+// 	}
+
+// 	if note.Name == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Note name is required"})
+// 		return
+// 	}
+
+// 	// Create the notes directory for the specific course
+// 	notesDir := filepath.Join("uploads", "courses", courseName, "notes")
+// 	if err := os.MkdirAll(notesDir, os.ModePerm); err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notes directory"})
+// 		return
+// 	}
+
+// 	// Define note file path
+// 	noteFilePath := filepath.Join(notesDir, note.Name+".json")
+
+// 	// Store the content in JSON format
+// 	noteData := map[string]string{
+// 		"content": note.Content, // Multi-line content is preserved
+// 	}
+// 	fileData, _ := json.MarshalIndent(noteData, "", "  ")
+
+// 	// Write to file
+// 	err = os.WriteFile(noteFilePath, fileData, 0644)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save note"})
+// 		return
+// 	}
+
+// 	// Update database with the note entry
+// 	_, err = coursesCollection.UpdateOne(context.TODO(),
+// 		bson.M{"name": courseName},
+// 		bson.M{"$push": bson.M{"notes": note.Name + ".json"}})
+
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update course notes in database"})
+// 		return
+// 	}
+
+//		c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".json"})
+//	}
 func uploadTextNote(c *gin.Context) {
 	courseName := c.Param("course")
 
@@ -803,55 +865,94 @@ func uploadTextNote(c *gin.Context) {
 		return
 	}
 
-	// Define note file path
-	noteFilePath := filepath.Join(notesDir, note.Name+".json")
+	// Define note file path (saving as .txt)
+	noteFilePath := filepath.Join(notesDir, note.Name+".txt")
 
-	// Store the content in JSON format
-	noteData := map[string]string{
-		"content": note.Content, // Multi-line content is preserved
-	}
-	fileData, _ := json.MarshalIndent(noteData, "", "  ")
-
-	// Write to file
-	err = os.WriteFile(noteFilePath, fileData, 0644)
+	// Write the content as plain text (not JSON)
+	err = os.WriteFile(noteFilePath, []byte(note.Content), 0644)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save note"})
 		return
 	}
 
-	// Update database with the note entry
+	// Update database with the note entry (store the file name without extension)
 	_, err = coursesCollection.UpdateOne(context.TODO(),
 		bson.M{"name": courseName},
-		bson.M{"$push": bson.M{"notes": note.Name + ".json"}})
+		bson.M{"$push": bson.M{"notes": note.Name + ".txt"}})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update course notes in database"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".json"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Note added successfully", "note": note.Name + ".txt"})
 }
 
+// func downloadNotes(c *gin.Context) {
+// 	courseName := c.Param("course")
+// 	noteName := c.Param("note")
+
+// 	noteFilePath := filepath.Join("uploads", "courses", courseName, "notes", noteName)
+
+// 	if _, err := os.Stat(noteFilePath); os.IsNotExist(err) {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Note not found"})
+// 		return
+// 	}
+
+// 	// Read the note file
+// 	fileContent, err := os.ReadFile(noteFilePath)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read note file"})
+// 		return
+// 	}
+
+//		// Return the note content in JSON
+//		c.Data(http.StatusOK, "application/json", fileContent)
+//	}
 func downloadNotes(c *gin.Context) {
 	courseName := c.Param("course")
 	noteName := c.Param("note")
 
-	noteFilePath := filepath.Join("uploads", "courses", courseName, "notes", noteName+".json")
+	// Construct the file path for the note
+	noteFilePath := filepath.Join("uploads", "courses", courseName, "notes", noteName)
 
+	// Check if the note file exists
 	if _, err := os.Stat(noteFilePath); os.IsNotExist(err) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Note not found"})
 		return
 	}
 
-	// Read the note file
+	// Read the note file content
 	fileContent, err := os.ReadFile(noteFilePath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read note file"})
 		return
 	}
 
-	// Return the note content in JSON
-	c.Data(http.StatusOK, "application/json", fileContent)
+	// Create a PDF document
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.SetFont("Arial", "", 12)
+	pdf.AddPage()
+
+	// Add title
+	pdf.Ln(10)
+
+	// Add the note content to the PDF (as plain text)
+	content := string(fileContent)
+
+	// Here we ensure the content is added to the PDF as plain text
+	pdf.MultiCell(0, 10, content, "", "L", false)
+
+	// Set the response headers for downloading the PDF file
+	c.Header("Content-Disposition", "attachment; filename="+noteName+".pdf")
+	c.Header("Content-Type", "application/pdf")
+
+	// Write the PDF to the response
+	err = pdf.Output(c.Writer)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate PDF"})
+		return
+	}
 }
 
 // Get all courses
@@ -894,7 +995,7 @@ func getCourseResources(c *gin.Context) {
 
 	if files, err := os.ReadDir(notesDir); err == nil {
 		for _, file := range files {
-			if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
+			if !file.IsDir() && strings.HasSuffix(file.Name(), ".txt") {
 				notes = append(notes, file.Name()) // Store note filenames
 			}
 		}
@@ -1085,6 +1186,34 @@ func uploadAssignment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Assignment submitted successfully", "file": handler.Filename})
 }
+func checkAssignmentSubmission(c *gin.Context) {
+	studentName := c.Param("student")
+	courseName := c.Param("course")
+	assignmentName := c.Param("assignment")
+
+	// ✅ Check if the assignment exists in the database
+	filter := bson.M{"coursename": courseName, "assignmentname": assignmentName}
+	var existingAssignment bson.M
+	err := assignmentsCollection.FindOne(context.TODO(), filter).Decode(&existingAssignment)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Assignment not found in database"})
+		return
+	}
+
+	// ✅ Check if the student has already submitted the assignment
+	submissions := existingAssignment["submissions"].([]interface{})
+	for _, submission := range submissions {
+		submissionMap := submission.(bson.M)
+		if submissionMap["student"] == studentName {
+			// Assignment is submitted
+			c.JSON(http.StatusOK, gin.H{"message": "Submitted"})
+			return
+		}
+	}
+
+	// ✅ If not found, respond with "Not Submitted"
+	c.JSON(http.StatusOK, gin.H{"message": "Not Submitted"})
+}
 
 func getSubmissions(c *gin.Context) {
 	courseName := c.Param("course")
@@ -1141,11 +1270,57 @@ func gradeAssignment(c *gin.Context) {
 }
 
 // 📌 **Student: View Assignments (with attachments)**
-func getStudentAssignments(c *gin.Context) {
-	courseName := c.Param("course")
+// func getStudentAssignments(c *gin.Context) {
+// 	courseName := c.Param("course")
 
-	// ✅ Fetch assignments from MongoDB
-	cursor, err := assignmentsCollection.Find(context.TODO(), bson.M{"course": courseName})
+// 	// ✅ Fetch assignments from MongoDB
+// 	cursor, err := assignmentsCollection.Find(context.TODO(), bson.M{"course": courseName})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
+// 		return
+// 	}
+// 	defer cursor.Close(context.TODO())
+
+// 	var assignments []Assignment
+// 	for cursor.Next(context.TODO()) {
+// 		var assignment Assignment
+// 		if err := cursor.Decode(&assignment); err != nil {
+// 			continue
+// 		}
+
+// 		// ✅ Check if the assignment has a PDF file
+// 		assignmentPath := filepath.Join("uploads", "courses", courseName, "assignments", assignment.AssignmentName, "assignment.pdf")
+// 		if _, err := os.Stat(assignmentPath); err == nil {
+// 			assignment.PDFPath = assignmentPath // PDF exists, add to response
+// 		}
+
+// 		assignments = append(assignments, assignment)
+// 	}
+
+// 	if err := cursor.Err(); err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing assignments"})
+// 		return
+// 	}
+
+//		// ✅ Return assignments list (with PDF if available)
+//		c.JSON(http.StatusOK, gin.H{"assignments": assignments})
+//	}
+func getStudentAssignments(c *gin.Context) {
+	courseName := strings.ToLower(c.Param("course")) // Ensure lowercase matching
+
+	// Debug: Check course name and MongoDB documents
+	log.Printf("Fetching assignments for course: %s\n", courseName)
+
+	// Count assignments for the given course
+	count, err := assignmentsCollection.CountDocuments(context.TODO(), bson.M{"coursename": bson.M{"$regex": courseName, "$options": "i"}})
+	if err != nil {
+		log.Println("Error counting documents:", err)
+	} else {
+		log.Printf("Found %d assignments for course: %s\n", count, courseName)
+	}
+
+	// Fetch assignments
+	cursor, err := assignmentsCollection.Find(context.TODO(), bson.M{"coursename": bson.M{"$regex": courseName, "$options": "i"}})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch assignments"})
 		return
@@ -1156,24 +1331,26 @@ func getStudentAssignments(c *gin.Context) {
 	for cursor.Next(context.TODO()) {
 		var assignment Assignment
 		if err := cursor.Decode(&assignment); err != nil {
+			log.Println("Error decoding assignment:", err)
 			continue
 		}
 
-		// ✅ Check if the assignment has a PDF file
+		// Debug: Print fetched assignment
+		log.Printf("Fetched assignment: %+v\n", assignment)
+
+		// Check if the assignment has a PDF file
 		assignmentPath := filepath.Join("uploads", "courses", courseName, "assignments", assignment.AssignmentName, "assignment.pdf")
 		if _, err := os.Stat(assignmentPath); err == nil {
-			assignment.PDFPath = assignmentPath // PDF exists, add to response
+			assignment.PDFPath = assignmentPath
 		}
 
 		assignments = append(assignments, assignment)
 	}
 
-	if err := cursor.Err(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing assignments"})
-		return
-	}
+	// Debug: Print final assignment list
+	log.Printf("Returning assignments: %+v\n", assignments)
 
-	// ✅ Return assignments list (with PDF if available)
+	// Return assignments list
 	c.JSON(http.StatusOK, gin.H{"assignments": assignments})
 }
 
@@ -1193,7 +1370,7 @@ func main() {
 	// 	c.Next()
 	// })
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:4200"}, // Allow frontend origin
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173"}, // Allow frontend origin
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -1233,9 +1410,11 @@ func main() {
 	// router.GET("/courses/:course/downloadNotes", downloadNotes)
 	router.GET("/courses/:course/downloadNotes/:note", downloadNotes)
 	router.POST("/students/:student/courses/:course/assignments/:assignment/upload", uploadAssignment)
+	router.POST("/students/:student/courses/:course/assignments/:assignment/checksubmission", checkAssignmentSubmission)
 	router.GET("/students/courses/:course/assignments", getStudentAssignments) // **View Assignments**
 
 	fmt.Println("Server running on port 8000")
 	router.Run(":8000")
 
 }
+
